@@ -1,0 +1,65 @@
+package luma.ui;
+
+/** Pure geometry and stable motion for expanding from the floating button. */
+final class TransitionMath {
+  private TransitionMath() {}
+  static float clamp(float value) { return Math.max(0f, Math.min(1f, value)); }
+  static float layoutUnit(float density,float width,float height) {
+    if(density<=0f||width<=0f||height<=0f)return .1f;
+    return Math.max(.01f,Math.min(density,Math.min(width/700f,height/420f)));
+  }
+  static float scatterPhase(int key,float progress,float stage){int hash=key*1103515245+12345;float jitter=((hash>>>16)&255)/255f*.09f;float delay=Math.min(.55f,Math.max(0,stage)+jitter);float p=clamp((progress-delay)/(1-delay));return p*p*(3-2*p);}
+  static float scatterOffset(int key,float progress){return (1-scatterPhase(key,progress,.08f))*(float)Math.sin(key*2.399963f);}
+  static int visibleCharacters(int count,int key,float progress,float stage){if(count<=0)return 0;int hash=key*1103515245+12345;float jitter=((hash>>>16)&255)/255f*.06f;float delay=Math.min(.6f,stage+jitter);float phase=clamp((progress-delay)/(.88f-delay));return Math.min(count,Math.max(0,(int)Math.floor(count*phase)));}
+  static float snapshotMix(float progress){float t=clamp((progress-.88f)/.12f);return t*t*(3f-2f*t);}
+  static float offset(float origin, float center, float progress) { return (origin-center)*(1f-clamp(progress)); }
+  static float startScale(float bubbleWidth,float bubbleHeight,float menuWidth,float menuHeight) {
+    if(bubbleWidth<=0f||bubbleHeight<=0f||menuWidth<=0f||menuHeight<=0f)return .08f;
+    return Math.max(.01f,Math.min(1f,Math.min(bubbleWidth/menuWidth,bubbleHeight/menuHeight)));
+  }
+  static float scale(float start,float progress) {float p=clamp(progress),s=clamp(start);return s+(1f-s)*p;}
+  static float elasticScale(float start,float progress,boolean stretchedAxis) {
+    float p=clamp(progress);float curved=p+(stretchedAxis?.30f:-.30f)*p*(1f-p);
+    return scale(start,curved);
+  }
+  // Radial, non-affine funnel: the side nearest the button is pulled in
+  // faster than the far edge. The small twist adds a black-hole bend.
+  static void warpPoint(float px,float py,float anchorX,float anchorY,float width,float height,float progress,float[] result,int at) {
+    float p=clamp(progress),vx=px-anchorX,vy=py-anchorY;
+    float farX=Math.max(Math.abs(anchorX),Math.abs(width-anchorX));
+    float farY=Math.max(Math.abs(anchorY),Math.abs(height-anchorY));
+    float max=(float)Math.sqrt(farX*farX+farY*farY);
+    float distance=max>0?clamp((float)Math.sqrt(vx*vx+vy*vy)/max):0f;
+    float bend=(1f-distance)*(1f-p),scale=p*(1f-.92f*bend);
+    float swirl=.48f*p*bend;
+    result[at]=anchorX+vx*scale-vy*swirl;result[at+1]=anchorY+vy*scale+vx*swirl;
+  }
+  static void warpMesh(float width,float height,float anchorX,float anchorY,float progress,int columns,int rows,float[] out){
+    float p=clamp(progress),farX=Math.max(Math.abs(anchorX),Math.abs(width-anchorX)),farY=Math.max(Math.abs(anchorY),Math.abs(height-anchorY));
+    float max=(float)Math.sqrt(farX*farX+farY*farY);int at=0;
+    for(int row=0;row<=rows;row++)for(int col=0;col<=columns;col++){
+      float vx=width*col/columns-anchorX,vy=height*row/rows-anchorY;
+      float distance=max>0?clamp((float)Math.sqrt(vx*vx+vy*vy)/max):0f;
+      float bend=(1f-distance)*(1f-p),scale=p*(1f-.92f*bend),swirl=.48f*p*bend;
+      out[at++]=anchorX+vx*scale-vy*swirl;out[at++]=anchorY+vy*scale+vx*swirl;
+    }
+  }
+  static final class Spring {
+    private float value,velocity;
+    void reset(float initial){value=clamp(initial);velocity=0f;}
+    float value(){return value;}
+    float velocity(){return velocity;}
+    float step(float goal,float elapsed,float speed) {
+      goal=clamp(goal);float remaining=Math.max(0f,Math.min(.05f,elapsed));
+      float stiffness=115f+155f*clamp(speed),damping=2.05f*(float)Math.sqrt(stiffness);
+      while(remaining>0f){float dt=Math.min(remaining,1f/120f);remaining-=dt;
+        velocity+=(stiffness*(goal-value)-damping*velocity)*dt;
+        value+=velocity*dt;
+        if(value<0f){value=0f;if(velocity<0f)velocity=0f;}
+        if(value>1f){value=1f;if(velocity>0f)velocity=0f;}
+      }
+      if(Math.abs(goal-value)<.0003f&&Math.abs(velocity)<.003f){value=goal;velocity=0f;}
+      return value;
+    }
+  }
+}

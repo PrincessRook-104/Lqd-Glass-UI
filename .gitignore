@@ -1,0 +1,7 @@
+*.log
+.DS_Store
+.gradle/
+.idea/
+
+# Locally generated build products; the installable pack is a release asset.
+artifacts/
