@@ -29,7 +29,7 @@ assert 'playField.pointer((px-body)' in s and 'lava.render' in s
 assert 'if(!shown)return false;' in s and 'snapshotMix(open)' in s
 assert 'PixelCopy.request(surface' in Path('src/AdaptiveSampler.java').read_text()
 assert 'putBoolean("adaptiveColor",adaptiveColor)' in s and 'sampler.stop()' in s
-assert 'HudEditor.start(' in s and '"Mods","Appearance","Glass","Motion","Effects","HUD Editor"' in s
+assert 'HudEditor.start(' in s and '"Mods","Appearance","Glass","Fog","Motion","Effects","HUD Editor"' in s
 assert '"Fade","Portal","Elastic","Scatter"' in s
 assert 'transitionStyle==2&&!shown&&open<1f' in s
 assert 'adaptiveGrid.accept(pixels)' in s and 'adaptiveBitmap,null,new RectF(x,y,x+w,y+h)' in s
@@ -43,4 +43,7 @@ assert 'putInt("glassMode",glassMode)' in s and 'glass.draw(c,x,y,w,h' in s and 
 assert 'PixelCopy.request(surface' in Path('src/GlassSampler.java').read_text()
 assert 'SDK_INT>=33' in gl and 'isHardwareAccelerated()' in gl and 'catch(Throwable' in gl
 assert 'drawBackdrop(c,shownValue[10],open)' in s and 'tab==7' in s and 'glassSampler.configure(' in s
+assert 'condensation.wipe(' in s and 'condensation.step(' in s and 'condensation.draw(' in s and 'condensation.refog()' in s
+assert 'DST_IN' in Path('src/Condensation.java').read_text()
+assert 'onGenericMotionEvent' in s and 'ACTION_POINTER_DOWN' in s and 'glassSampler.interval(' in s and 'GlassMath.fps(' in s
 print('UI snapshot, search, background and gesture lifecycle guards passed')

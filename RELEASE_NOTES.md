@@ -1,3 +1,27 @@
+## Lqd Glass UI 1.6.1 · Refresh rate and background lock
+
+- **Glass refresh rate** slider (Glass tab): how often the glass copies the game behind it, from **1 to 120 fps** (default 11 fps). Higher is smoother and costs more battery; the next capture only starts after the previous one finished, so the real rate can be lower on slow devices.
+- **Background lock:** while the menu is open nothing reaches the game. A tap outside the panel closes the menu, and so now do an extra finger placed outside it and scrolling outside it with a mouse or trackpad. Mouse and stylus hovering no longer reaches the game either.
+- Glass tab sliders are spaced slightly closer to fit the new one.
+
+## Lqd Glass UI 1.6.0 · Fog (condensation)
+
+- **New glass mode: Fog.** Pick it under **Glass → Liquid glass**. The panel gets a misted, frosted layer with water droplets on it.
+- **Wipe it with your finger.** Touch or drag anywhere on the panel to clear the fog and the droplets under your finger. Menu controls still work while you wipe.
+- **Droplets live.** They grow slowly, merge when they touch, and once they get heavy they run down the glass, leaving a clear trail and picking up smaller drops on the way. Some stop halfway.
+- **Fog comes back.** Wiped areas mist over again over time.
+- **New Fog tab** with Fog amount, Droplets, Drip speed, Wipe size and Fog regrow, plus a **Fog the glass again** button.
+- Each droplet shows the game behind it upside down, like real water. The clear glass underneath keeps its refraction. **Glass blur** sets how frosted the fog looks.
+- The sidebar is a little tighter to fit the extra tab.
+
+## Lqd Glass UI 1.5.3 · Clear glass
+
+- **Glass blur 0% now gives clear glass.** The panel interior shows the live game instead of a captured copy, so with **Transparency 100%** the menu is fully see-through. In Refraction mode only the rim bends and shimmers (an oil-slick look); in Frosted mode only the tint and rim remain.
+- **Panel opacity can reach 0%.** It used to stop at about 68%.
+- **New "Menu dim" slider** (Glass tab) for the dark veil behind the menu. 0% removes it; the default matches the old look.
+- Sliders snap to 0% and 100% within 2% of either end, so the exact ends are easy to hit.
+- With liquid glass on, the depth shadow no longer darkens the inside of the panel.
+
 ## Lqd Glass UI 1.5.2 · Renamed
 
 - The mod is now called **Lqd Glass UI** (sidebar title, launcher entry and floating-button label). The file is `LqdGlassUI.levipack`. Internal ids are unchanged, so settings carry over.

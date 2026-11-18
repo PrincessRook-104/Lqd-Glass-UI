@@ -11,17 +11,19 @@ import android.view.ViewGroup;
 /** Copies game SurfaceView regions at reduced size for the liquid glass panel and the menu backdrop blur. Never captures the Luma overlay and never saves or sends frames. */
 final class GlassSampler {
   interface Result {void frame(Bitmap bitmap);void backdrop(Bitmap bitmap,float left,float top,float right,float bottom);void unavailable();}
-  private static final long INTERVAL=90;private static final float BACKDROP_LONG_SIDE=160f;
+  private static final float BACKDROP_LONG_SIDE=160f;private volatile long interval=91;
   private final Activity activity;private final View anchor;private final Result callback;private final Handler handler=new Handler(Looper.getMainLooper());
   private final Bitmap[] buffers=new Bitmap[2];private int back;private Bitmap backdropBuffer;
   private boolean running,pending,wantPanel=true,wantBackdrop;private int generation;private float x,y,w,h;
   GlassSampler(Activity a,View anchor,Result r){activity=a;this.anchor=anchor;callback=r;}
   void start(){if(running)return;running=true;generation++;handler.post(tick);}
   void stop(){running=false;generation++;pending=false;handler.removeCallbacks(tick);}
+  /** Milliseconds between backdrop captures (1000 = 1 fps ... 8 = 120 fps). A new capture never starts before the previous one finished. */
+  void interval(long ms){interval=Math.max(1L,ms);}
   void configure(boolean panel,boolean backdrop){wantPanel=panel;wantBackdrop=backdrop;}
   void bounds(float x,float y,float w,float h){this.x=x;this.y=y;this.w=w;this.h=h;}
   private final Runnable tick=new Runnable(){public void run(){sample();}};
-  private void later(){if(running){handler.removeCallbacks(tick);handler.postDelayed(tick,INTERVAL);}}
+  private void later(){if(running){handler.removeCallbacks(tick);handler.postDelayed(tick,interval);}}
   private static SurfaceView largest(View v,SurfaceView best){
     if(v instanceof SurfaceView&&v.isShown()&&v.getWidth()>20&&v.getHeight()>20){SurfaceView s=(SurfaceView)v;if(best==null||(long)s.getWidth()*s.getHeight()>(long)best.getWidth()*best.getHeight())best=s;}
     if(v instanceof ViewGroup){ViewGroup g=(ViewGroup)v;for(int i=0;i<g.getChildCount();i++)best=largest(g.getChildAt(i),best);}return best;

@@ -56,3 +56,7 @@ The build creates `artifacts/libLumaUI.so` and `artifacts/LqdGlassUI.levipack`. 
 ## Liquid glass
 
 Appearance → Liquid glass: Off / Frosted / Refraction. Refraction needs Android 13+ (AGSL) and a hardware-accelerated overlay; otherwise Frosted is used. Needs an accessible game SurfaceView, like Adaptive color.
+
+### Fog mode
+
+Glass → Liquid glass → Fog adds condensation with droplets. Touch the panel to wipe it; droplets run down over time. Tune it in the Fog tab.

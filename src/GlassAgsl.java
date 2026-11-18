@@ -20,6 +20,7 @@ final class GlassAgsl {
     "uniform float sat;\n"+
     "uniform float alpha;\n"+
     "uniform float4 tint;\n"+
+    "uniform float body;\n"+
     "float sdBox(float2 p, float2 hb, float r) {\n"+
     "  float2 q = abs(p) - hb + float2(r);\n"+
     "  return min(max(q.x, q.y), 0.0) + length(max(q, float2(0.0))) - r;\n"+
@@ -44,23 +45,27 @@ final class GlassAgsl {
     "  float3 col = mix(blurC, sharpC, 0.9 * edge);\n"+
     "  float lum = dot(col, float3(0.299, 0.587, 0.114));\n"+
     "  col = mix(float3(lum), col, sat);\n"+
-    "  col = mix(col, tint.rgb, tint.a);\n"+
-    "  col += float3(0.10) * lens;\n"+
-    "  return half4(half3(col * alpha), half(alpha));\n"+
+    "  float3 opaqueRGB = mix(col, tint.rgb, tint.a);\n"+
+    "  float edgeA = edge * clamp(strength * 2.0, 0.0, 1.0);\n"+
+    "  float3 clearRGB = mix(tint.rgb, col, edgeA);\n"+
+    "  float aClear = max(tint.a, edgeA);\n"+
+    "  float3 rgb = mix(clearRGB, opaqueRGB, body) + float3(0.10) * lens;\n"+
+    "  float a = mix(aClear, 1.0, body);\n"+
+    "  return half4(half3(rgb * a * alpha), half(a * alpha));\n"+
     "}\n";
   private final RuntimeShader shader=new RuntimeShader(SRC);
   private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
   private final Matrix sharpMatrix=new Matrix(),blurMatrix=new Matrix();
   private Bitmap sharpBitmap,blurBitmap;private BitmapShader sharpShader,blurShader;
   private static BitmapShader linear(Bitmap b){BitmapShader s=new BitmapShader(b,Shader.TileMode.CLAMP,Shader.TileMode.CLAMP);s.setFilterMode(BitmapShader.FILTER_MODE_LINEAR);return s;}
-  void draw(Canvas c,Bitmap sharp,Bitmap blur,float x,float y,float w,float h,float radius,float bezel,float strength,float dispersion,float sat,int tintColor,float tintAlpha,float alpha){
+  void draw(Canvas c,Bitmap sharp,Bitmap blur,float x,float y,float w,float h,float radius,float bezel,float strength,float dispersion,float sat,int tintColor,float tintAlpha,float alpha,float body){
     if(sharp!=sharpBitmap){sharpBitmap=sharp;sharpShader=linear(sharp);}
     if(blur!=blurBitmap){blurBitmap=blur;blurShader=linear(blur);}
     sharpMatrix.setScale(w/sharp.getWidth(),h/sharp.getHeight());sharpMatrix.postTranslate(x,y);sharpShader.setLocalMatrix(sharpMatrix);
     blurMatrix.setScale(w/blur.getWidth(),h/blur.getHeight());blurMatrix.postTranslate(x,y);blurShader.setLocalMatrix(blurMatrix);
     shader.setInputShader("sharpTex",sharpShader);shader.setInputShader("blurTex",blurShader);
     shader.setFloatUniform("origin",x,y);shader.setFloatUniform("size",w,h);shader.setFloatUniform("radius",radius);shader.setFloatUniform("bezel",bezel);
-    shader.setFloatUniform("strength",strength);shader.setFloatUniform("dispersion",dispersion);shader.setFloatUniform("sat",sat);shader.setFloatUniform("alpha",alpha);
+    shader.setFloatUniform("strength",strength);shader.setFloatUniform("dispersion",dispersion);shader.setFloatUniform("sat",sat);shader.setFloatUniform("alpha",alpha);shader.setFloatUniform("body",body);
     shader.setFloatUniform("tint",((tintColor>>16)&255)/255f,((tintColor>>8)&255)/255f,(tintColor&255)/255f,tintAlpha);
     paint.setShader(shader);c.drawRoundRect(x,y,x+w,y+h,radius,radius,paint);paint.setShader(null);
   }

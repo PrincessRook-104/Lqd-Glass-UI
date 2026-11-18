@@ -17,6 +17,8 @@ final class LiquidGlass {
   private final Rect srcRect=new Rect(),dstRect=new Rect();private final RectF rect=new RectF();private final Path clip=new Path();
   private Bitmap backdropFront;private final Bitmap[] backdrops=new Bitmap[2];private int backdropNext;private int[] bpx,btmp;private final RectF backdropRect=new RectF();
   private GlassAgsl agsl;private boolean agslFailed;
+  Bitmap sharpBitmap(){return sharp;}
+  Bitmap blurBitmap(){return blurFront;}
   boolean ready(){return sharp!=null&&blurFront!=null;}
   void clear(){sharp=null;blurFront=null;}
   /** UI thread. bitmap is owned by the sampler; it is only read here and again by drawing until the sampler writes its other buffer. */
@@ -44,17 +46,18 @@ final class LiquidGlass {
   }
   /** Draws the glass base for the panel. Returns false when no backdrop frame exists yet, so the caller keeps the normal panel. */
   boolean draw(Canvas c,float x,float y,float w,float h,float radius,float unit,float open,int panelColor,float tint,float refraction,float blurAmount,float brightness,float lightX,float lightY,int mode){
-    if(!ready()||open<=0f)return false;
-    Bitmap s=sharp,b=blurAmount<.02f?sharp:blurFront;float tintAlpha=Math.max(0f,Math.min(1f,tint));
+    boolean clear=GlassMath.isClear(blurAmount);
+    if(open<=0f||(!ready()&&!(clear&&mode!=GlassMath.REFRACT)))return false;
+    Bitmap s=sharp,b=clear?sharp:blurFront;float tintAlpha=Math.max(0f,Math.min(1f,tint));
     boolean refracted=false;
-    if(mode==GlassMath.REFRACT&&Build.VERSION.SDK_INT>=33&&!agslFailed&&c.isHardwareAccelerated()){
-      try{if(agsl==null)agsl=new GlassAgsl();agsl.draw(c,s,b,x,y,w,h,radius,14*unit,Math.max(0f,Math.min(1f,refraction)),.22f*Math.min(1f,refraction*1.8f),1.25f,panelColor,tintAlpha,open);refracted=true;}
+    if(mode==GlassMath.REFRACT&&s!=null&&b!=null&&Build.VERSION.SDK_INT>=33&&!agslFailed&&c.isHardwareAccelerated()){
+      try{if(agsl==null)agsl=new GlassAgsl();agsl.draw(c,s,b,x,y,w,h,radius,14*unit,Math.max(0f,Math.min(1f,refraction)),.22f*Math.min(1f,refraction*1.8f),1.25f,panelColor,tintAlpha,open,clear?0f:1f);refracted=true;}
       catch(Throwable t){agslFailed=true;agsl=null;}
     }
     rect.set(x,y,x+w,y+h);
     if(!refracted){
       c.save();clip.rewind();clip.addRoundRect(rect,radius,radius,Path.Direction.CW);c.clipPath(clip);
-      fill.setShader(null);fill.setStyle(Paint.Style.FILL);fill.setColorFilter(null);fill.setAlpha((int)(255*open));c.drawBitmap(b,null,rect,fill);
+      fill.setShader(null);fill.setStyle(Paint.Style.FILL);fill.setColorFilter(null);fill.setAlpha((int)(255*open));if(!clear&&b!=null)c.drawBitmap(b,null,rect,fill);
       fill.setColor((panelColor&0xffffff)|((int)(255*tintAlpha*open)<<24));c.drawRect(rect,fill);c.restore();
     }
     float veil=GlassMath.veil(brightness);

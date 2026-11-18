@@ -3,7 +3,7 @@
   "name": "Lqd Glass UI",
   "author": "Zxwmwmwm",
   "description": "A customizable liquid glass overlay with launcher mod controls, black-hole elastic transitions, and animated themes.",
-  "version": "1.5.2",
+  "version": "1.6.1",
   "entry": "libLumaUI.so",
   "minecraft_versions": ["1.26.62", "1.26.62.*"]
 }

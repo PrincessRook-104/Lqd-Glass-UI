@@ -160,12 +160,12 @@ public final class LumaUI {
     final Map<String,Float> switchValues=new HashMap<>();
     final Runnable syncRunnable=new Runnable(){public void run(){if(modReleased||!shown||tab!=3)return;
       if(!modBusy){if(modPackages)refreshPackagesQuietly();else syncModuleRows();}postDelayed(this,modPackages?4000:1200);}};
-    float open=0, tabMotion=0,scatterProgress=1; boolean shown=false, touchRipple=true, smoothBackground=true, glowFollow=true,adaptiveColor=false,adaptiveValid=false; int glassMode=GlassMath.REFRACT;final LiquidGlass glass=new LiquidGlass();GlassSampler glassSampler;int tab=3, active=-1, motionMode=1, colorSlot=0, depthMode=2, transitionStyle=2,buttonReturn=1,buttonSize=1,buttonIcon=0,pressStyle=2;
+    float open=0, tabMotion=0,scatterProgress=1; boolean shown=false, touchRipple=true, smoothBackground=true, glowFollow=true,adaptiveColor=false,adaptiveValid=false; int glassMode=GlassMath.REFRACT;final LiquidGlass glass=new LiquidGlass();final Condensation condensation=new Condensation();GlassSampler glassSampler;int tab=3, active=-1, motionMode=1, colorSlot=0, depthMode=2, transitionStyle=2,buttonReturn=1,buttonSize=1,buttonIcon=0,pressStyle=2;
     final TransitionMath.Spring spring=new TransitionMath.Spring();final PressMotion press=new PressMotion();boolean suppressPress; float tapAge=1f,tapX,tapY; long resetArmedUntil;
     final LavaField lava=new LavaField();final int[] lavaPixels=new int[112*64];Bitmap lavaBitmap;long lavaRendered;
     AdaptiveSampler sampler;final AdaptiveGrid adaptiveGrid=new AdaptiveGrid();Bitmap adaptiveBitmap;int adaptiveTargetPanel=0xff12141f,adaptiveTargetAccent=0xff9280ff,adaptivePanel=0xff12141f,adaptiveAccent=0xff9280ff;String adaptiveStatus="";final float[] adaptivePanelParts=new float[3],adaptiveAccentParts=new float[3];
     final int[] palette=new int[3]; float phaseTime=0, lightX=.82f, lightY=.12f, targetLightX=.82f, targetLightY=.12f;
-    float[] target=new float[11], shownValue=new float[11];
+    float[] target=new float[18], shownValue=new float[18];
     float x,y,w,h,side,body,unit,anchorX,anchorY,anchorWidth,anchorHeight; boolean haveAnchor; long last;
     Panel(Context c){ super(c); setClickable(true); prefs=c.getSharedPreferences("lumaui_settings",0);
       palette[0]=prefs.getInt("accentColor",Color.rgb((int)(prefs.getFloat("red",.57f)*255),(int)(prefs.getFloat("green",.50f)*255),(int)(prefs.getFloat("blue",1f)*255)));
@@ -174,14 +174,14 @@ public final class LumaUI {
       transitionStyle=Math.max(0,Math.min(3,prefs.getInt("transitionStyle",prefs.getBoolean("portalTransition",true)?2:0)));
       depthMode=Math.max(0,Math.min(2,prefs.getInt("depthMode",2)));touchRipple=prefs.getBoolean("touchRipple",true);smoothBackground=prefs.getBoolean("smoothBackground",true);glowFollow=prefs.getBoolean("glowFollow",true);adaptiveColor=prefs.getBoolean("adaptiveColor",false);glassMode=GlassMath.mode(prefs.getInt("glassMode",GlassMath.REFRACT));
       buttonReturn=Math.max(0,Math.min(3,prefs.getInt("buttonReturn",1)));buttonSize=Math.max(0,Math.min(2,prefs.getInt("buttonSize",1)));buttonIcon=Math.max(0,Math.min(2,prefs.getInt("buttonIcon",0)));pressStyle=Math.max(0,Math.min(2,prefs.getInt("pressStyle",2)));
-      tab=Math.max(0,Math.min(7,prefs.getInt("lastTab",3)));tabMotion=navIndex(tab);modPackages=prefs.getBoolean("modPackages",false);
+      tab=Math.max(0,Math.min(8,prefs.getInt("lastTab",3)));tabMotion=navIndex(tab);modPackages=prefs.getBoolean("modPackages",false);
       modPages.set(false,prefs.getInt("modulePage",0));modPages.set(true,prefs.getInt("packagePage",0));modPage=modPages.get(modPackages);
       packageFavorites=new HashSet<>(prefs.getStringSet("packageFavorites",new HashSet<String>()));
       modLayout=Math.max(0,Math.min(2,prefs.getInt("modLayout",0)));categoryMotion=modPackages?1:0;layoutMotion=modLayout;loadModOffset();
-      loadColor(0);target[3]=prefs.getFloat("opacity",.92f);target[4]=prefs.getFloat("motion",.5f);target[5]=prefs.getFloat("glowStrength",.8f);target[6]=prefs.getFloat("glassRefraction",.55f);target[7]=prefs.getFloat("glassBlur",.55f);target[8]=prefs.getFloat("glassTransparency",.5f);target[9]=prefs.getFloat("glassBrightness",.5f);target[10]=prefs.getFloat("menuBlur",.35f);System.arraycopy(target,0,shownValue,0,target.length);
+      loadColor(0);target[3]=prefs.getFloat("opacity",.92f);target[4]=prefs.getFloat("motion",.5f);target[5]=prefs.getFloat("glowStrength",.8f);target[6]=prefs.getFloat("glassRefraction",.55f);target[7]=prefs.getFloat("glassBlur",.55f);target[8]=prefs.getFloat("glassTransparency",.5f);target[9]=prefs.getFloat("glassBrightness",.5f);target[10]=prefs.getFloat("menuBlur",.35f);target[11]=prefs.getFloat("menuDim",.49f);target[12]=prefs.getFloat("fogAmount",.7f);target[13]=prefs.getFloat("fogDroplets",.5f);target[14]=prefs.getFloat("fogDrip",.5f);target[15]=prefs.getFloat("fogWipe",.5f);target[16]=prefs.getFloat("fogRegrow",.3f);target[17]=prefs.getFloat("glassFps",.5f);System.arraycopy(target,0,shownValue,0,target.length);
     }
-    static int navTab(int index){int[] order={3,0,7,1,2,6,4,5};return order[Math.max(0,Math.min(7,index))];}
-    static int navIndex(int tab){for(int i=0;i<8;i++)if(navTab(i)==tab)return i;return 0;}
+    static int navTab(int index){int[] order={3,0,7,8,1,2,6,4,5};return order[Math.max(0,Math.min(8,index))];}
+    static int navIndex(int tab){for(int i=0;i<9;i++)if(navTab(i)==tab)return i;return 0;}
     void recycleWarp(){warpBitmap=null;snapshotValid=false;}
     void release(){if(sampler!=null)sampler.stop();stopGlass();modReleased=true;modRequest++;stopGesture();removeCallbacks(syncRunnable);if(settingsDialog!=null)settingsDialog.dismiss();if(searchDialog!=null)searchDialog.dismiss();recycleWarp();}
     boolean prepareWarp(float width,float height){
@@ -264,7 +264,7 @@ public final class LumaUI {
     void close(){press.cancel();if(sampler!=null)sampler.stop();stopGlass();recycleWarp();shown=false;for(PlayField field:playFields)field.pressed=false;stopGesture();saveModOffset();active=-1;removeCallbacks(syncRunnable);invalidate();}
     void loadColor(int slot){colorSlot=slot;int color=palette[slot];target[0]=Color.red(color)/255f;target[1]=Color.green(color)/255f;target[2]=Color.blue(color)/255f;}
     void recordColor(){palette[colorSlot]=Color.rgb((int)(target[0]*255),(int)(target[1]*255),(int)(target[2]*255));}
-    void save(){recordColor();prefs.edit().putInt("accentColor",palette[0]).putInt("panelColor",palette[1]).putInt("effectColor",palette[2]).putFloat("opacity",target[3]).putFloat("motion",target[4]).putInt("motionMode",motionMode).putBoolean("portalTransition",transitionStyle!=0).putInt("transitionStyle",transitionStyle).putInt("depthMode",depthMode).putBoolean("touchRipple",touchRipple).putBoolean("smoothBackground",smoothBackground).putBoolean("glowFollow",glowFollow).putBoolean("adaptiveColor",adaptiveColor).putInt("glassMode",glassMode).putFloat("glowStrength",target[5]).putFloat("glassRefraction",target[6]).putFloat("glassBlur",target[7]).putFloat("glassTransparency",target[8]).putFloat("glassBrightness",target[9]).putFloat("menuBlur",target[10]).putInt("buttonReturn",buttonReturn).putInt("buttonSize",buttonSize).putInt("buttonIcon",buttonIcon).putInt("pressStyle",pressStyle).apply();if(bubble!=null)bubble.invalidate();}
+    void save(){recordColor();prefs.edit().putInt("accentColor",palette[0]).putInt("panelColor",palette[1]).putInt("effectColor",palette[2]).putFloat("opacity",target[3]).putFloat("motion",target[4]).putInt("motionMode",motionMode).putBoolean("portalTransition",transitionStyle!=0).putInt("transitionStyle",transitionStyle).putInt("depthMode",depthMode).putBoolean("touchRipple",touchRipple).putBoolean("smoothBackground",smoothBackground).putBoolean("glowFollow",glowFollow).putBoolean("adaptiveColor",adaptiveColor).putInt("glassMode",glassMode).putFloat("glowStrength",target[5]).putFloat("glassRefraction",target[6]).putFloat("glassBlur",target[7]).putFloat("glassTransparency",target[8]).putFloat("glassBrightness",target[9]).putFloat("menuBlur",target[10]).putFloat("menuDim",target[11]).putFloat("fogAmount",target[12]).putFloat("fogDroplets",target[13]).putFloat("fogDrip",target[14]).putFloat("fogWipe",target[15]).putFloat("fogRegrow",target[16]).putFloat("glassFps",target[17]).putInt("buttonReturn",buttonReturn).putInt("buttonSize",buttonSize).putInt("buttonIcon",buttonIcon).putInt("pressStyle",pressStyle).apply();if(bubble!=null)bubble.invalidate();}
     int panelColor(){return adaptiveColor&&adaptiveValid?adaptivePanel:palette[1];}
     int accent(){return adaptiveColor&&adaptiveValid?adaptiveAccent:colorSlot==0?Color.rgb((int)(shownValue[0]*255),(int)(shownValue[1]*255),(int)(shownValue[2]*255)):palette[0];}
     void startGlass(){boolean panelGlass=glassMode!=0,backdropBlur=target[10]>.01f;if((!panelGlass&&!backdropBlur)||!shown){stopGlass();return;}
@@ -278,7 +278,7 @@ public final class LumaUI {
     void initParts(float[] a,int color){a[0]=Color.red(color);a[1]=Color.green(color);a[2]=Color.blue(color);}
     int stepParts(float[] a,int color,float k){int[] b={Color.red(color),Color.green(color),Color.blue(color)};for(int i=0;i<3;i++){a[i]+=(b[i]-a[i])*k;if(Math.abs(a[i]-b[i])<.35f)a[i]=b[i];}return Color.rgb(Math.round(a[0]),Math.round(a[1]),Math.round(a[2]));}
     int alpha(int color,int a){return (color&0xffffff)|(Math.max(0,Math.min(255,a))<<24);}
-    void resetVisuals(){palette[0]=0xff9280ff;palette[1]=0xff12141f;palette[2]=0xff9280ff;loadColor(0);target[3]=.92f;target[4]=.5f;target[5]=.8f;target[6]=.55f;target[7]=.55f;target[8]=.5f;target[9]=.5f;target[10]=.35f;motionMode=1;backgroundBlend.select(1);for(PlayField field:playFields)field.pressed=false;depthMode=2;transitionStyle=2;touchRipple=true;smoothBackground=true;glowFollow=true;adaptiveColor=false;if(sampler!=null)sampler.stop();adaptiveValid=false;glassMode=GlassMath.REFRACT;startGlass();buttonReturn=1;buttonSize=1;buttonIcon=0;pressStyle=2;press.cancel();resetArmedUntil=0;save();resizeBubble(buttonSize);invalidate();}
+    void resetVisuals(){palette[0]=0xff9280ff;palette[1]=0xff12141f;palette[2]=0xff9280ff;loadColor(0);target[3]=.92f;target[4]=.5f;target[5]=.8f;target[6]=.55f;target[7]=.55f;target[8]=.5f;target[9]=.5f;target[10]=.35f;target[11]=.49f;target[12]=.7f;target[13]=.5f;target[14]=.5f;target[15]=.5f;target[16]=.3f;target[17]=.5f;condensation.refog();motionMode=1;backgroundBlend.select(1);for(PlayField field:playFields)field.pressed=false;depthMode=2;transitionStyle=2;touchRipple=true;smoothBackground=true;glowFollow=true;adaptiveColor=false;if(sampler!=null)sampler.stop();adaptiveValid=false;glassMode=GlassMath.REFRACT;startGlass();buttonReturn=1;buttonSize=1;buttonIcon=0;pressStyle=2;press.cancel();resetArmedUntil=0;save();resizeBubble(buttonSize);invalidate();}
     void round(Canvas c,float l,float t,float r,float b,float radius,int color){
       c.save();if(!suppressPress&&(r-l)<250*unit&&(b-t)<65*unit&&(b-t)>10*unit)pressTransform(c,l,t,r,b);
       p.setStyle(Paint.Style.FILL);p.setColor(color);c.drawRoundRect(new RectF(l,t,r,b),radius,radius,p);c.restore();}
@@ -294,12 +294,17 @@ public final class LumaUI {
     }
     void depthShadow(Canvas c,int ac){
       if(depthMode==0)return;
+      boolean glassOn=glassMode!=0;
+      c.save();
+      // With liquid glass the shadow stays outside the panel, so clear glass is not darkened from underneath.
+      if(glassOn){Path inside=new Path();inside.addRoundRect(new RectF(x,y,x+w,y+h),20*unit,20*unit,Path.Direction.CW);c.clipOutPath(inside);}
       int layers=depthMode==2?5:2;
       for(int i=layers;i>0;i--){float offset=i*(depthMode==2?1.6f:1.1f)*unit;
         round(c,x+offset*.35f,y+offset,x+w-offset*.35f,y+h+offset,20*unit,alpha(0xff03040a,(int)((26+i*6)*open)));}
       // Layered translucent geometry gives depth without an expensive full-panel blur.
-      p.setStyle(Paint.Style.FILL);p.setColor(alpha(0xff0a0a18,(int)(90*open)));
-      c.drawRoundRect(new RectF(x,y,x+w,y+h),20*unit,20*unit,p);
+      if(!glassOn){p.setStyle(Paint.Style.FILL);p.setColor(alpha(0xff0a0a18,(int)(90*open)));
+        c.drawRoundRect(new RectF(x,y,x+w,y+h),20*unit,20*unit,p);}
+      c.restore();
     }
     void depthLight(Canvas c,int ac){
       if(depthMode==0)return;
@@ -318,6 +323,8 @@ public final class LumaUI {
       long now=android.os.SystemClock.uptimeMillis();float dt=last==0?.016f:Math.min(.05f,(now-last)/1000f);last=now;
       phaseTime+=dt*(.35f+target[4]*1.3f);float speed=10f+target[4]*14f;float k=1f-(float)Math.exp(-dt*speed);
       if(shown){backgroundBlend.step(dt,target[4]);if(backgroundBlend.weight(1)>.001f||motionMode==1)lava.step(dt*(.5f+target[4]),h>1?Math.max(.3f,(w-side)/h):1.3f);for(int mode=3;mode<=5;mode++)if(backgroundBlend.weight(mode)>.001f||mode==motionMode)playFields[mode-3].step(dt*(.6f+target[4]),mode);}
+      if(glassSampler!=null)glassSampler.interval(GlassMath.frameMs(target[17]));
+      if(shown&&glassMode==GlassMath.FOG)condensation.step(dt,w,h,unit,target[12],target[13],target[14],target[16]);
       if(shown&&transitionStyle==3&&scatterProgress<1)scatterProgress=Math.min(1,scatterProgress+dt/(1.45f-.5f*target[4]));
       open=spring.step(shown?1f:0f,dt,target[4]);tabMotion+=(navIndex(tab)-tabMotion)*k;modAnim=Math.max(0,modAnim-dt*3.8f);
       categoryMotion+=((modPackages?1f:0f)-categoryMotion)*k;layoutMotion+=(modLayout-layoutMotion)*k;
@@ -336,7 +343,7 @@ public final class LumaUI {
       float W=getWidth(),H=getHeight(),density=getResources().getDisplayMetrics().density;if(W<=0||H<=0)return;unit=TransitionMath.layoutUnit(density,W,H);
       w=Math.min(W-24*unit,760*unit);h=Math.min(H-24*unit,440*unit);x=(W-w)/2;y=(H-h)/2;side=Math.min(185*unit,w*.29f);body=x+side;if(sampler!=null&&adaptiveColor)sampler.bounds(x,y,w,h);if(glassSampler!=null)glassSampler.bounds(x,y,w,h);int ac=accent();
       glass.drawBackdrop(c,shownValue[10],open);
-      c.drawColor(Color.argb((int)(125*open),0,0,0));
+      c.drawColor(Color.argb((int)(255*shownValue[11]*open),0,0,0));
       float originX=haveAnchor?anchorX:W/2,originY=haveAnchor?anchorY:H/2;
       if(transitionStyle==2 && open<.995f){
         float flash=4f*open*(1f-open);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth((1.2f+2f*flash)*unit);
@@ -367,6 +374,7 @@ public final class LumaUI {
           c.save();c.rotate(phaseTime*35,cx,cy);p.setStrokeWidth(unit);p.setColor(alpha(ac,(int)(115*halo)));c.drawOval(new RectF(cx-rx*1.05f,cy-ry*.65f,cx+rx*1.05f,cy+ry*.65f),p);c.restore();p.setStyle(Paint.Style.FILL);
         }else drawPanel(c,W,H,originX,originY,ac,true);
       }
+      if(shown&&glassMode==GlassMath.FOG)anim=true;
       if(anim)postInvalidateOnAnimation();else if(shown&&motionMode!=0){if(smoothBackground)postInvalidateOnAnimation();else postInvalidateDelayed(33);}else last=0;
     }
     // Transition snapshots are immutable until the animation ends. Reusing a
@@ -379,10 +387,13 @@ public final class LumaUI {
         c.translate(TransitionMath.offset(originX,W/2,open),TransitionMath.offset(originY,H/2,open));c.scale(sx,sy,W/2,H/2);}
       else if(transform)c.scale(.94f+.06f*open,.94f+.06f*open,W/2,H/2);
       depthShadow(c,ac);
-      int bg=(int)((.68f+.31f*shownValue[3])*255*open);
-      if(glassMode!=0&&glass.draw(c,x,y,w,h,20*unit,unit,open,panelColor(),GlassMath.tint(shownValue[8]),shownValue[6],shownValue[7],shownValue[9],lightX,lightY,glassMode)){}
+      int bg=(int)(shownValue[3]*255*open);
+      boolean fogMode=glassMode==GlassMath.FOG;
+      boolean glassDrawn=glassMode!=0&&glass.draw(c,x,y,w,h,20*unit,unit,open,panelColor(),GlassMath.tint(shownValue[8]),shownValue[6],fogMode?0f:shownValue[7],shownValue[9],lightX,lightY,fogMode?(glass.ready()?GlassMath.REFRACT:GlassMath.FROSTED):glassMode);
+      if(glassDrawn){}
       else if(adaptiveColor&&adaptiveValid&&adaptiveBitmap!=null){c.save();Path themeClip=new Path();themeClip.addRoundRect(new RectF(x,y,x+w,y+h),20*unit,20*unit,Path.Direction.CW);c.clipPath(themeClip);p.setStyle(Paint.Style.FILL);p.setColor(Color.WHITE);p.setFilterBitmap(true);p.setAlpha(bg);c.drawBitmap(adaptiveBitmap,null,new RectF(x,y,x+w,y+h),p);p.setAlpha(255);c.restore();}
       else round(c,x,y,x+w,y+h,20*unit,Color.argb(bg,Color.red(panelColor()),Color.green(panelColor()),Color.blue(panelColor())));
+      if(glassDrawn&&fogMode)condensation.draw(c,x,y,w,h,20*unit,unit,open,glass.sharpBitmap(),glass.blurBitmap());
       depthLight(c,ac);
       c.save();Path backgroundClip=new Path();backgroundClip.addRoundRect(new RectF(x,y,x+w,y+h),20*unit,20*unit,Path.Direction.CW);c.clipPath(backgroundClip);
       for(int mode=1;mode<BackgroundBlend.COUNT;mode++){float weight=backgroundBlend.weight(mode);if(weight<.002f)continue;
@@ -394,12 +405,12 @@ public final class LumaUI {
         p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(unit);p.setColor(alpha(0xffffffff,(int)((depthMode==2?28:14)*open)));c.drawRoundRect(new RectF(x+2*unit,y+2*unit,x+w-2*unit,y+h-2*unit),18*unit,18*unit,p);p.setStyle(Paint.Style.FILL);}
       round(c,x+16*unit,y+18*unit,x+48*unit,y+50*unit,10*unit,alpha(ac,(int)(210*open)));text(c,"L",x+26*unit,y+41*unit,20*unit,alpha(Color.WHITE,(int)(255*open)),true);
       text(c,"Lqd Glass UI",x+57*unit,y+34*unit,15*unit,alpha(Color.WHITE,(int)(255*open)),true);text(c,"YOUR SPACE",x+57*unit,y+48*unit,8*unit,alpha(0xffa7a8bd,(int)(220*open)),true);
-      float menuY=y+83*unit; round(c,x+12*unit,menuY+tabMotion*34*unit,x+side-12*unit,menuY+30*unit+tabMotion*34*unit,10*unit,alpha(ac,(int)(45*open)));
+      float menuY=y+83*unit; round(c,x+12*unit,menuY+tabMotion*30*unit,x+side-12*unit,menuY+27*unit+tabMotion*30*unit,10*unit,alpha(ac,(int)(45*open)));
       round(c,x+12*unit,menuY+tabMotion*40*unit+8*unit,x+15*unit,menuY+tabMotion*40*unit+28*unit,2*unit,alpha(ac,(int)(220*open)));
-      String[] tabs={"Mods","Appearance","Glass","Motion","Effects","HUD Editor","About","Button"}; for(int i=0;i<8;i++){boolean selected=navTab(i)==tab;int co=selected?0xfff5f4ff:0xff979aaa;c.save();scatterInto(c,i+3,x+24*unit,menuY+(i*34+24)*unit,.03f);text(c,tabs[i],x+24*unit,menuY+(i*34+24)*unit,13*unit,alpha(co,(int)(255*open)),selected);c.restore();}
-      text(c,"GUI ONLY  •  v1.5.2",x+20*unit,y+h-20*unit,9*unit,alpha(0xff85899e,(int)(220*open)),false);
+      String[] tabs={"Mods","Appearance","Glass","Fog","Motion","Effects","HUD Editor","About","Button"}; for(int i=0;i<9;i++){boolean selected=navTab(i)==tab;int co=selected?0xfff5f4ff:0xff979aaa;c.save();scatterInto(c,i+3,x+24*unit,menuY+(i*30+24)*unit,.03f);text(c,tabs[i],x+24*unit,menuY+(i*30+24)*unit,13*unit,alpha(co,(int)(255*open)),selected);c.restore();}
+      text(c,"GUI ONLY  •  v1.6.1",x+20*unit,y+h-20*unit,9*unit,alpha(0xff85899e,(int)(220*open)),false);
       p.setColor(alpha(0xff6f7080,(int)(65*open)));p.setStrokeWidth(unit);c.drawLine(body,y+18*unit,body,y+h-18*unit,p);
-      text(c,tab==0?"Appearance":tab==7?"Glass":tab==1?"Motion":tab==2?"Effects":tab==3?"Mods":tab==4?"About":tab==5?"Button":"HUD Editor",body+24*unit,y+38*unit,21*unit,alpha(Color.WHITE,(int)(255*open)),true);
+      text(c,tab==0?"Appearance":tab==7?"Glass":tab==8?"Fog":tab==1?"Motion":tab==2?"Effects":tab==3?"Mods":tab==4?"About":tab==5?"Button":"HUD Editor",body+24*unit,y+38*unit,21*unit,alpha(Color.WHITE,(int)(255*open)),true);
       round(c,x+w-48*unit,y+14*unit,x+w-15*unit,y+47*unit,10*unit,alpha(0xff777b94,(int)(38*open)));
       text(c,"×",x+w-36*unit,y+38*unit,25*unit,alpha(0xffe5e6f2,(int)(255*open)),false);
       float transition=1f-Math.min(.75f,Math.abs(navIndex(tab)-tabMotion)*.65f);
@@ -442,9 +453,14 @@ public final class LumaUI {
         round(c,left,y+352*unit,right,y+384*unit,9*unit,alpha(armed?0xffe27878:0xff505365,(int)((armed?100:50)*open)));
         text(c,armed?"Tap again to reset visual settings":"Reset visual settings",left+10*unit,y+373*unit,10*unit,alpha(Color.WHITE,(int)(240*open)),armed);
       } else if(tab==7){text(c,"LIQUID GLASS",body+24*unit,y+61*unit,9*unit,alpha(ac,(int)(255*open)),true);
-        float glassLeft=body+24*unit,glassWidth=(x+w-32*unit-glassLeft)/3f;String[] glassNames={"Off","Frosted","Refraction"};
-        for(int i=0;i<3;i++){float sl=glassLeft+i*glassWidth;scatterItem(c,i+115,sl,y+88*unit);round(c,sl,y+75*unit,sl+glassWidth-5*unit,y+102*unit,8*unit,alpha(i==glassMode?ac:0xff505365,(int)((i==glassMode?85:45)*open)));text(c,glassNames[i],sl+9*unit,y+93*unit,10*unit,alpha(Color.WHITE,(int)(240*open)),i==glassMode);c.restore();}
-        for(int i=0;i<5;i++) slider(c,6+i,y+(130+i*44)*unit,open);
+        float glassLeft=body+24*unit,glassWidth=(x+w-32*unit-glassLeft)/4f;String[] glassNames={"Off","Frosted","Refraction","Fog"};
+        for(int i=0;i<4;i++){float sl=glassLeft+i*glassWidth;scatterItem(c,i+115,sl,y+88*unit);round(c,sl,y+75*unit,sl+glassWidth-5*unit,y+102*unit,8*unit,alpha(i==glassMode?ac:0xff505365,(int)((i==glassMode?85:45)*open)));text(c,glassNames[i],sl+9*unit,y+93*unit,10*unit,alpha(Color.WHITE,(int)(240*open)),i==glassMode);c.restore();}
+        for(int i=0;i<6;i++) slider(c,6+i,y+(118+i*36)*unit,open);
+        slider(c,17,y+(118+6*36)*unit,open);
+      } else if(tab==8){text(c,"CONDENSATION",body+24*unit,y+61*unit,9*unit,alpha(ac,(int)(255*open)),true);
+        text(c,"Active when Liquid glass is set to Fog. Touch the glass to wipe it.",body+24*unit,y+80*unit,9*unit,alpha(0xffa4a7bb,(int)(255*open)),false);
+        for(int i=0;i<5;i++) slider(c,12+i,y+(104+i*40)*unit,open);
+        round(c,body+24*unit,y+312*unit,x+w-32*unit,y+346*unit,10*unit,alpha(ac,(int)(125*open)));text(c,"Fog the glass again",body+39*unit,y+334*unit,12*unit,alpha(Color.WHITE,(int)(240*open)),true);
       } else if(tab==3){drawMods(c,ac);
       } else if(tab==6){drawHudEditor(c,ac);
       } else if(tab==5){drawButtonSettings(c,ac);
@@ -585,7 +601,7 @@ public final class LumaUI {
         text(c,"‹ Prev",right-124*unit,y+388*unit,10*unit,alpha(Color.WHITE,(int)(240*open)),false);text(c,"Next ›",right-55*unit,y+388*unit,10*unit,alpha(Color.WHITE,(int)(240*open)),false);
       }else text(c,modLayout==1?"Swipe up or down to browse":"Swipe left or right to browse",left,y+393*unit,10*unit,alpha(0xffbec0d1,(int)(255*open)),false);
     }
-    void slider(Canvas c,int i,float yy,float fade){String[] names={"Red","Green","Blue","Panel opacity","Animation speed","Glow intensity","Refraction","Glass blur","Transparency","Brightness","Menu background blur"};float left=body+24*unit,right=x+w-32*unit; text(c,names[i],left,yy,11*unit,alpha(0xffe4e5f0,(int)(255*fade)),true);text(c,""+Math.round(target[i]*100)+"%",right-30*unit,yy,10*unit,alpha(0xffa4a7bb,(int)(255*fade)),false);float sy=yy+13*unit;round(c,left,sy,right,sy+4*unit,3*unit,alpha(0xff525567,(int)(150*fade)));round(c,left,sy,left+(right-left)*shownValue[i],sy+4*unit,3*unit,alpha(accent(),(int)(255*fade)));p.setColor(alpha(0xffffffff,(int)(255*fade)));if(depthMode!=0)p.setShadowLayer(7*unit,0,0,alpha(accent(),(int)(125*shownValue[5]*fade)));c.drawCircle(left+(right-left)*shownValue[i],sy+2*unit,6*unit,p);p.clearShadowLayer();}
+    void slider(Canvas c,int i,float yy,float fade){String[] names={"Red","Green","Blue","Panel opacity","Animation speed","Glow intensity","Refraction","Glass blur","Transparency","Brightness","Menu background blur","Menu dim","Fog amount","Droplets","Drip speed","Wipe size","Fog regrow","Glass refresh rate"};float left=body+24*unit,right=x+w-32*unit; text(c,names[i],left,yy,11*unit,alpha(0xffe4e5f0,(int)(255*fade)),true);text(c,i==17?GlassMath.fps(target[i])+" fps":Math.round(target[i]*100)+"%",right-(i==17?44:30)*unit,yy,10*unit,alpha(0xffa4a7bb,(int)(255*fade)),false);float sy=yy+13*unit;round(c,left,sy,right,sy+4*unit,3*unit,alpha(0xff525567,(int)(150*fade)));round(c,left,sy,left+(right-left)*shownValue[i],sy+4*unit,3*unit,alpha(accent(),(int)(255*fade)));p.setColor(alpha(0xffffffff,(int)(255*fade)));if(depthMode!=0)p.setShadowLayer(7*unit,0,0,alpha(accent(),(int)(125*shownValue[5]*fade)));c.drawCircle(left+(right-left)*shownValue[i],sy+2*unit,6*unit,p);p.clearShadowLayer();}
     void activateModAt(float px,float py){
       float left=body+24*unit,right=x+w-32*unit,top=y+166*unit;
       if(px<left||px>right||py<top||py>top+ModLayout.HEIGHT*unit)return;
@@ -601,12 +617,23 @@ public final class LumaUI {
       boolean gear=controls&&row.hasSettings&&px>=rowRight-110*unit&&px<rowRight-67*unit;
       if(star)favorite(row);else if(gear)openSettings(row);else changeMod(row);
     }
+    @Override public boolean onGenericMotionEvent(MotionEvent e){
+      if(!shown)return false;
+      // Mouse, trackpad and stylus events never reach the game while the menu is open; scrolling outside the panel closes it.
+      if(e.getActionMasked()==MotionEvent.ACTION_SCROLL&&open>=.98f&&(e.getX()<x||e.getX()>x+w||e.getY()<y||e.getY()>y+h))close();
+      return true;
+    }
     public boolean onTouchEvent(MotionEvent e){float px=e.getX(),py=e.getY();int act=e.getActionMasked();float left=body+24*unit,right=x+w-32*unit;
       if(!shown)return false;
       if(open<.98f||(transitionStyle==3&&scatterProgress<.98f))return true;
+      // While the menu is open the game behind it cannot be touched: any extra finger placed outside the panel closes the menu instead.
+      if(act==MotionEvent.ACTION_POINTER_DOWN){int pointer=e.getActionIndex();float qx=e.getX(pointer),qy=e.getY(pointer);if(qx<x||qx>x+w||qy<y||qy>y+h){close();return true;}}
       if(pressStyle!=0){if(act==MotionEvent.ACTION_DOWN&&px>=x&&px<=x+w&&py>=y&&py<=y+h){press.down(px,py);invalidate();}
         else if(act==MotionEvent.ACTION_MOVE&&press.held&&((px-press.x)*(px-press.x)+(py-press.y)*(py-press.y)>100*unit*unit)){press.cancel();invalidate();}
         else if(act==MotionEvent.ACTION_UP){press.release();invalidate();}else if(act==MotionEvent.ACTION_CANCEL){press.cancel();invalidate();}}
+      if(glassMode==GlassMath.FOG){boolean onGlass=px>=x&&px<=x+w&&py>=y&&py<=y+h;
+        if(onGlass&&(act==MotionEvent.ACTION_DOWN||act==MotionEvent.ACTION_MOVE)){condensation.wipe((px-x)/unit,(py-y)/unit,10f+26f*target[15]);invalidate();}
+        else if(act==MotionEvent.ACTION_UP||act==MotionEvent.ACTION_CANCEL)condensation.endWipe();}
       if(motionMode>=3){PlayField playField=playFields[motionMode-3];boolean inside=px>=body&&px<=x+w&&py>=y&&py<=y+h;
         if((act==MotionEvent.ACTION_DOWN&&inside)||(act==MotionEvent.ACTION_MOVE&&playField.pressed)){
           float bw=Math.max(1,x+w-body);playField.pointer((px-body)/bw,(py-y)/Math.max(1,h),true,motionMode,bw/Math.max(1,h));invalidate();
@@ -628,7 +655,7 @@ public final class LumaUI {
           if(dragged&&modLayout!=0){if(flingVelocity==0)saveModOffset();else invalidate();}return true;}
         return true;
       }
-      if(act==MotionEvent.ACTION_DOWN){if(px>x+w-55*unit&&py>y&&py<y+55*unit){close();return true;} if(px<x||px>x+w||py<y||py>y+h){close();return true;}if(px>x+12*unit&&px<body-10*unit&&py>y+83*unit&&py<y+355*unit){int newTab=navTab(Math.min(7,(int)((py-y-83*unit)/(34*unit))));if(newTab!=tab){saveModOffset();stopGesture();tab=newTab;prefs.edit().putInt("lastTab",tab).apply();removeCallbacks(syncRunnable);if(tab==3){ensureMods();startSync();startListAnimation();}}invalidate();return true;}
+      if(act==MotionEvent.ACTION_DOWN){if(px>x+w-55*unit&&py>y&&py<y+55*unit){close();return true;} if(px<x||px>x+w||py<y||py>y+h){close();return true;}if(px>x+12*unit&&px<body-10*unit&&py>y+83*unit&&py<y+353*unit){int newTab=navTab(Math.min(8,(int)((py-y-83*unit)/(30*unit))));if(newTab!=tab){saveModOffset();stopGesture();tab=newTab;prefs.edit().putInt("lastTab",tab).apply();removeCallbacks(syncRunnable);if(tab==3){ensureMods();startSync();startListAnimation();}}invalidate();return true;}
         if(tab==3&&px>=left&&px<=right){
           if(py>=y+70*unit&&py<=y+96*unit){boolean selection=px>=left+(right-left)/2; if(selection!=modPackages){saveModPage();saveModOffset();stopGesture();modPackages=selection;prefs.edit().putBoolean("modPackages",selection).apply();modPage=filtering()?0:modPages.get(selection);if(filtering())modOffset=0;else loadModOffset();modRows=new ArrayList<>();allModRows=new ArrayList<>();modAvailable=false;refreshMods();startListAnimation();}return true;}
           if(py>=y+102*unit&&py<=y+129*unit){if(px>=right-94*unit){if(!modPackages&&!favoritesKnown){modStatus="Launcher favorites unavailable";invalidate();}else changeFilter(modQuery,!favoritesOnly);}else showSearch();return true;}
@@ -650,13 +677,14 @@ public final class LumaUI {
         if(tab==2&&px>=right-65*unit&&px<=right&&py>=y+220*unit&&py<=y+253*unit){glowFollow=!glowFollow;if(!glowFollow){targetLightX=.82f;targetLightY=.12f;}save();invalidate();return true;}
         if(tab==2&&px>=left&&px<=right&&py>=y+287*unit&&py<=y+324*unit){smoothBackground=px>=left+(right-left)/2;save();invalidate();return true;}
         if(tab==2&&px>=left&&px<=right&&py>=y+349*unit&&py<=y+388*unit){long now=android.os.SystemClock.uptimeMillis();if(now<resetArmedUntil)resetVisuals();else{resetArmedUntil=now+3000;postInvalidateDelayed(3050);invalidate();}return true;}
-        if(tab==7&&px>=left&&px<=right&&py>=y+71*unit&&py<=y+106*unit){int next=Math.min(2,(int)((px-left)/((right-left)/3)));if(next!=glassMode){glassMode=next;if(glassMode==0)stopGlass();else startGlass();save();}invalidate();return true;}
+        if(tab==8&&px>=left&&px<=right&&py>=y+312*unit&&py<=y+346*unit){condensation.refog();invalidate();return true;}
+        if(tab==7&&px>=left&&px<=right&&py>=y+71*unit&&py<=y+106*unit){int next=Math.min(3,(int)((px-left)/((right-left)/4)));if(next!=glassMode){glassMode=next;if(next==GlassMath.FOG)condensation.endWipe();if(glassMode==0)stopGlass();else startGlass();save();}invalidate();return true;}
         if(tab==0&&px>=right-58*unit&&px<=right&&py>=y+104*unit&&py<=y+129*unit){adaptiveColor=!adaptiveColor;adaptiveValid=false;adaptiveStatus="";if(adaptiveColor)startAdaptive();else if(sampler!=null)sampler.stop();save();invalidate();return true;}
         if(tab==0&&px>=left&&px<=right&&py>=y+71*unit&&py<=y+106*unit){save();loadColor(Math.min(2,(int)((px-left)/((right-left)/3))));for(int i=0;i<3;i++)shownValue[i]=target[i];invalidate();return true;}
         if(tab==0&&py>y+127*unit&&py<y+162*unit){int n=(int)((px-body-24*unit)/(34*unit));int[] colors={0xff9280ff,0xff54d7d2,0xfffd87a5,0xffffbe69,0xff12141f};if(n>=0&&n<5&&px>=body+24*unit){int col=colors[n];target[0]=Color.red(col)/255f;target[1]=Color.green(col)/255f;target[2]=Color.blue(col)/255f;save();invalidate();return true;}}
-        if(px>=left-12*unit&&px<=right+12*unit){if(tab==0){for(int i=0;i<4;i++)if(Math.abs(py-(y+(197+i*51)*unit))<18*unit){active=i;break;}} else if(tab==7){for(int i=0;i<5;i++)if(Math.abs(py-(y+(145+i*44)*unit))<18*unit){active=6+i;break;}} else if(tab==1&&Math.abs(py-(y+176*unit))<18*unit)active=4;else if(tab==2&&Math.abs(py-(y+146*unit))<18*unit)active=5;}
+        if(px>=left-12*unit&&px<=right+12*unit){if(tab==0){for(int i=0;i<4;i++)if(Math.abs(py-(y+(197+i*51)*unit))<18*unit){active=i;break;}} else if(tab==8){for(int i=0;i<5;i++)if(Math.abs(py-(y+(119+i*40)*unit))<17*unit){active=12+i;break;}} else if(tab==7){for(int i=0;i<7;i++)if(Math.abs(py-(y+(133+i*36)*unit))<17*unit){active=i<6?6+i:17;break;}} else if(tab==1&&Math.abs(py-(y+176*unit))<18*unit)active=4;else if(tab==2&&Math.abs(py-(y+146*unit))<18*unit)active=5;}
       }
-      if((act==MotionEvent.ACTION_DOWN||act==MotionEvent.ACTION_MOVE)&&active>=0){target[active]=Math.max(0,Math.min(1,(px-left)/(right-left)));if(active<3)recordColor();if(active==10)startGlass();invalidate();return true;}
+      if((act==MotionEvent.ACTION_DOWN||act==MotionEvent.ACTION_MOVE)&&active>=0){target[active]=GlassMath.snap((px-left)/(right-left));if(active<3)recordColor();if(active==10)startGlass();invalidate();return true;}
       if(act==MotionEvent.ACTION_UP||act==MotionEvent.ACTION_CANCEL){if(active>=0)save();active=-1;}return true;
     }
   }
